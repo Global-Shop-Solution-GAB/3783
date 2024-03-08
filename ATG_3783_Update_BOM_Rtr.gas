@@ -1,0 +1,73 @@
+Program.Sub.ScreenSU.Start
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+'Coded by: JLH
+'Project Start Date: 9/26/2011
+'Hooks:
+'  10185
+
+F.ODBC.Connection!conx.OpenConnection(V.Ambient.PDSN,V.Ambient.PUser,V.Ambient.PPass)
+
+'F.Intrinsic.Debug.InvokeDebugger
+F.Intrinsic.Debug.Stop
+
+F.Intrinsic.Control.CallSub(Update_router)
+
+F.Global.General.CallWrapperAsync(1010,"01!*!!*!!*!!*!!*!Y!*!02!*!Y!*!Y!*!Y!*!Y")
+
+F.ODBC.Connection!conx.Close
+F.Intrinsic.Control.End
+
+
+Program.Sub.Main.End
+
+Program.Sub.Update_Router.Start
+V.Local.sQuery.Declare(String)
+V.Local.sPart.Declare(String)
+V.local.sLoc.Declare(String)
+V.Local.sProject.Declare(String)
+
+F.Intrinsic.String.GSSPartString(V.Passed.000007,V.Passed.000008,V.Local.sPart)
+V.Local.sLoc.Set(V.Passed.000009)
+
+F.Intrinsic.String.Concat("Select * From Inventory_Mst3 where part='",V.Local.sPart,"' and LOCATION='",V.Local.sLoc,"'",V.Local.sQuery)
+F.ODBC.Connection!conx.OpenRecordsetRO("rst",V.Local.sQuery)
+F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,=,False)
+	V.Local.sProject.Set(V.ODBC.conx!rst.FieldVal!PROJECT_GROUP)
+F.Intrinsic.Control.EndIf
+F.ODBC.conx!rst.Close
+
+F.Intrinsic.String.Concat("Select * From Inventory_Mstr where part='",V.Local.sPart,"' and LOCATION='",V.Local.sLoc,"'",V.Local.sQuery)
+F.ODBC.Connection!conx.OpenRecordsetRO("rst",V.Local.sQuery)
+F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,=,False)
+	F.Intrinsic.String.Concat("Select * From Router_Line where Router_Type='L' and PART_WC_OUTSIDE='",V.Local.sPart,"'",V.Local.sQuery)
+	F.ODBC.Connection!conx.OpenRecordsetRW("rstR",V.Local.sQuery)
+	F.Intrinsic.Control.DoUntil(V.ODBC.conx!rstR.EOF,=,True)
+		F.ODBC.conx!rstR.Set!DESC_RT_LINE(V.ODBC.conx!rst.FieldValTrim!DESCRIPTION)
+		F.ODBC.conx!rstR.Set!UM_INVENTORY(V.ODBC.conx!rst.FieldValTrim!UM_INVENTORY)
+		F.ODBC.conx!rstR.Set!LEAD_TIME(V.ODBC.conx!rst.FieldValTrim!TIME_MATERIAL_LEAD)
+		F.ODBC.conx!rstR.Set!SORT_CODE(V.ODBC.conx!rst.FieldValTrim!CODE_SORT)
+		F.ODBC.conx!rstR.Set!PROJ_GROUP(V.Local.sProject)
+		F.ODBC.conx!rstR.Update
+		F.ODBC.conx!rstR.MoveNext
+	F.Intrinsic.Control.Loop
+	F.ODBC.conx!rstR.Close
+F.Intrinsic.Control.EndIf
+F.ODBC.conx!rst.Close
+	
+
+
+
+Program.Sub.Update_Router.End
+
+Program.Sub.Comments.Start
+${$0$}$ATG_3783_Update_BOM_Rtr$}$JCT$}$4/11/2016
+${$1$}$$}$$}$0$}$10180$}$INS010B-EXIT-BUTN-HOOK$}$4/11/2016 4:30:45 PM$}$(Program: INVMAIN; Screen: INS010B)
+
+Program.Sub.Comments.End
+
